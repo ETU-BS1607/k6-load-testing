@@ -1,61 +1,70 @@
+//Booking - UpdateBooking
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check } from 'k6';
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+// Variables for booking ID and authorization token
+const bookingId = '9'; // Replace with the actual booking ID you want to use
+let token = 'a9b8318845e7204 '; // Replace with the actual authorization token
 
-// Define the base URL for the API
-const baseUrl = 'https://restful-booker.herokuapp.com/booking';
+// Define the base URL
+const baseUrl = `https://restful-booker.herokuapp.com/booking/${bookingId}`;
 
-// Export K6 test options
-export const options = {
-    vus: 1,           // Number of Virtual Users
-    duration: '10s',  // Test duration
+// Define the request body for the PUT operation
+const payload = JSON.stringify({
+  "firstname": "Jim",
+  "lastname": "Brown",
+  "totalprice": 111,
+  "depositpaid": true,
+  "bookingdates": {
+    "checkin": "2018-01-01",
+    "checkout": "2019-01-01"
+  },
+  "additionalneeds": "Breakfast"
+});
+
+// Define the request headers
+const params = {
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Cookie': `token=${token}`,
+  },
 };
 
+// Define the K6 test scenario
 export default function () {
-    // Specify the booking ID you want to update
-    const bookingId = 750; // Replace with the actual booking ID
+ 
+  const getResponse = http.get(baseUrl, params);
 
-    // Define the updated booking details
-    const updatedBookingDetails = {
-        firstname: "etu",
-        lastname: "Brown",
-        totalprice: 111,
-        depositpaid: true,
-        bookingdates: {
-            checkin: "2018-01-01",
-            checkout: "2019-01-01"
-        },
-        additionalneeds: "Breakfast"
-    };
+  
+  const isGetSuccessful = check(getResponse, {
+    'GET request was successful': (r) => r.status === 200,
+  });
 
-    // Define the token for authorization
-    const authToken = '1b7871f25ee25da'; // Replace with the actual token
+  if (isGetSuccessful) {
+    console.log(`GET response body: ${getResponse.body}`);
 
-    // Send PUT request to update the booking
-    const updateBookingRes = http.put(`${baseUrl}/${bookingId}`, JSON.stringify(updatedBookingDetails), {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`  // If using Bearer Token
-            // 'Cookie': `token=${authToken}`  // If using Cookie Token
-        },
+   
+    const putResponse = http.put(baseUrl, payload, params);
+
+    
+    const isPutSuccessful = check(putResponse, {
+      'PUT request was successful': (r) => r.status === 200,
     });
 
-    // Log the response body
-    console.log(`Update Booking Response: ${updateBookingRes.body}`);
-
-    // Validate the response
-    check(updateBookingRes, {
-        'update status is 200': (r) => r.status === 200,
-        'firstname is updated to etu': (r) => {
-            try {
-                let responseJson = JSON.parse(r.body);
-                return responseJson.firstname === 'etu';
-            } catch (e) {
-                console.error('Error parsing response JSON:', e);
-                return false;
-            }
-        },
-    });
-
-    // Pause between iterations
-    sleep(1);
+    if (isPutSuccessful) {
+      console.log(`PUT response body: ${putResponse.body}`);
+    } else {
+      console.error(`PUT request failed. Status: ${putResponse.status}`);
+    }
+  } else {
+    console.error(`GET request failed. Status: ${getResponse.status}`);
+  }
 }
+
+export function handleSummary(data) {
+    return {
+        "summary.html": htmlReport(data),
+    };
+}
+ 
