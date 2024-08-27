@@ -1,50 +1,50 @@
+//Booking - CreateBooking
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check } from 'k6';
+// Define the JSON payload for creating a booking
+const payload = JSON.stringify({
+    "firstname": "Jim",
+    "lastname": "Brown",
+    "totalprice": 111,
+    "depositpaid": true,
+    "bookingdates": {
+        "checkin": "2018-01-01",
+        "checkout": "2019-01-01"
+    },
+    "additionalneeds": "Breakfast"
+});
 
-// Define the base URL for the API
-const baseUrl = 'https://restful-booker.herokuapp.com/booking';
-
-// Define your authorization token
-const authToken = 'dbb17c11214c5e2 '  ;  // Replace with your actual token
 export default function () {
-    // Define booking details
-    let bookingDetails = {
-        firstname: "Jim",
-        lastname: "Brown",
-        totalprice: 111,
-        depositpaid: true,
-        bookingdates: {
-            checkin: "2024-08-16",
-            checkout: "2024-08-17"
-        },
-        additionalneeds: "Breakfast"
-    };
-
-    // Send POST request to create a booking with authorization token
-    let bookingRes = http.post(baseUrl, JSON.stringify(bookingDetails), {
+    // Perform the POST request to create a new booking
+    const url = 'https://restful-booker.herokuapp.com/booking';
+    const res = http.post(url, payload, {
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}` // Include the token here
-        },
+            'Accept': 'application/json'
+        }
     });
 
-    // Log the response body
-    console.log('Create Booking Response:', bookingRes.body);
+    // Extract booking ID from the response
+    const responseBody = res.json();
+    const bookingId = responseBody.bookingid;
 
-    // Validate the response
-    check(bookingRes, {
-        'booking status is 200': (r) => r.status === 200,
-        'booking created successfully': (r) => {
-            try {
-                let responseJson = JSON.parse(r.body);
-                return responseJson.bookingid !== undefined;
-            } catch (e) {
-                console.error('Error parsing response JSON:', e);
-                return false;
-            }
-        },
+    // Log the actual response body and booking ID for debugging
+    console.log('Response body:', JSON.stringify(responseBody));
+    console.log('Booking ID in response:', bookingId);
+
+    // Perform checks on the response
+    check(res, {
+        'is status 200': (r) => r.status === 200,
+        'has bookingid': (r) => bookingId !== undefined,
+        'has correct booking details': (r) => {
+            const booking = r.json('booking');
+            return booking.firstname === 'Jim' &&
+                booking.lastname === 'Brown' &&
+                booking.totalprice === 111 &&
+                booking.depositpaid === true &&
+                booking.bookingdates.checkin === '2018-01-01' &&
+                booking.bookingdates.checkout === '2019-01-01' &&
+                booking.additionalneeds === 'Breakfast';
+        }
     });
-
-    
-    sleep(1);
 }

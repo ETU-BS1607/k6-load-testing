@@ -1,35 +1,35 @@
+//AUTH
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { SharedArray } from 'k6/data';
+import exec from 'k6/execution';
 
-//`export const options = {
-    //vus: 1,
-    //duration: '10s',
-//};`
 
+// Load user credentials from a JSON file
+const users = new SharedArray('users', () => JSON.parse(open('data.json')));
 export default function () {
-    // Define credentials for authentication
-    let credentials = {
-        username: "admin",
-        password: "password123"
+    // 1. Create Token
+    const user = users[0];
+    const authUrl = 'https://restful-booker.herokuapp.com/auth';
+    const authPayload = JSON.stringify({
+        username: user.username, 
+        password: user.password,
+    });
+    
+    const authParams = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
     };
     
-    // Perform the authentication request
-    let authRes = http.post('https://restful-booker.herokuapp.com/auth', JSON.stringify(credentials), {
-        headers: { 'Content-Type': 'application/json' },
-    });
-
-    // Check the response
+    const authRes = http.post(authUrl, authPayload, authParams);
+    
     check(authRes, {
-        'auth status is 200': (r) => r.status === 200,
-        'received token': (r) => {
-            let responseJson = JSON.parse(r.body);
-            let token = responseJson.token;
-            // Print the token to the console
-            console.log(`Received Token: ${token}`);
-            return token !== '';
-        },
+        'auth token created': (r) => r.status === 200,
     });
-
+    const authToken = authRes.json('token');
+    // Log the created token for verification
+    console.log(`Created Token: ${authToken}`);
     // Pause between iterations
     sleep(1);
 }
