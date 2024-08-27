@@ -3,8 +3,6 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
-
-
 // Load user credentials from a JSON file
 const users = new SharedArray('users', () => JSON.parse(open('data.json')));
 export default function () {

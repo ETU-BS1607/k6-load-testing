@@ -3,8 +3,8 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 // Variables for booking ID and authorization token
-const bookingId = '9'; // Replace with the actual booking ID you want to use
-let token = 'a9b8318845e7204 '; // Replace with the actual authorization token
+const bookingId = '2645'; // Replace with the actual booking ID you want to use
+let token = 'ce0d6c026180795'; // Replace with the actual authorization token
 
 // Define the base URL
 const baseUrl = `https://restful-booker.herokuapp.com/booking/${bookingId}`;
@@ -36,7 +36,7 @@ export default function () {
  
   const getResponse = http.get(baseUrl, params);
 
-  
+
   const isGetSuccessful = check(getResponse, {
     'GET request was successful': (r) => r.status === 200,
   });
@@ -64,7 +64,7 @@ export default function () {
 
 export function handleSummary(data) {
     return {
-        "summary.html": htmlReport(data),
+        "updatebooking_report.html": htmlReport(data),
     };
 }
  
