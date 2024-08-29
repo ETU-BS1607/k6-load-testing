@@ -1,6 +1,9 @@
 //Booking - CreateBooking
 import http from 'k6/http';
 import { check } from 'k6';
+
+
+
 // Define the JSON payload for creating a booking
 const payload = JSON.stringify({
     "firstname": "Jim",
@@ -14,6 +17,8 @@ const payload = JSON.stringify({
     "additionalneeds": "Breakfast"
 });
 
+
+
 export default function () {
     // Perform the POST request to create a new booking
     const url = 'https://restful-booker.herokuapp.com/booking';
@@ -24,6 +29,8 @@ export default function () {
         }
     });
 
+
+    
     // Extract booking ID from the response
     const responseBody = res.json();
     const bookingId = responseBody.bookingid;
